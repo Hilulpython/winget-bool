@@ -427,8 +427,8 @@ public class NativeMethods {
 #-------------------------------------------------------------------------------------------------------------------------------#
 function Update_Script {
     param(
-        [string]$VersionUrl = "https://raw.githubusercontent.com/Hilulpython/winget-bool/main/Version.txt",
-        [string]$ScriptUrl = "https://raw.githubusercontent.com/Hilulpython/winget-bool/main/Script/winget-bool.ps1"
+        [string]$VersionUrl = "https://raw.githubusercontent.com/Hilulpython/winget-bool/refs/heads/main/Version.txt",
+        [string]$ScriptUrl = "https://github.com/Hilulpython/winget-bool/raw/refs/heads/main/Script/winget-bool.exe"
     )
 
     [string]$CurrentVersion = $global:CurrentVersion
