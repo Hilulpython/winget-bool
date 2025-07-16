@@ -1,8 +1,8 @@
 # winget-bool.ps1
-# Author: Tim Stahl
+# Author: HilulPython
 # Version 1.0.0.0
 
-
+[string]$global:CurrentVersion = "1.0.0.0" 
 
 #------------------------------------------------------------------------------------------------------------------#
 #                                                    VARIABLES                                                     #
@@ -425,11 +425,66 @@ public class NativeMethods {
     ) | Out-Null               # Suppress any output from the call                                                              #
 }                                                                                                                               #
 #-------------------------------------------------------------------------------------------------------------------------------#
+function Update_Script {
+    param(
+        [string]$VersionUrl = "https://raw.githubusercontent.com/Hilulpython/winget-bool/main/Version.txt",
+        [string]$ScriptUrl = "https://raw.githubusercontent.com/Hilulpython/winget-bool/main/Script/winget-bool.ps1"
+    )
+
+    [string]$CurrentVersion = $global:CurrentVersion
+
+    try {
+        [string]$RemoteVersion = (Invoke-WebRequest -Uri $VersionUrl -UseBasicParsing -ErrorAction Stop).Content.Trim()
+    }
+    catch {
+        Write-Warning "Fehler beim Abrufen der Remote-Version von $VersionUrl"
+        return
+    }
+
+    if ([version]$RemoteVersion -gt [version]$CurrentVersion) {
+        Write-Host "Neue Version verfügbar: $RemoteVersion (aktuell: $CurrentVersion). Aktualisierung..."
+
+        try {
+            $NewScriptContent = (Invoke-WebRequest -Uri $ScriptUrl -UseBasicParsing -ErrorAction Stop).Content
+        }
+        catch {
+            Write-Warning "Das Herunterladen des neuen Skripts von $ScriptUrl ist fehlgeschlagen."
+            return
+        }
+
+        $CurrentScriptPath = $MyInvocation.MyCommand.Path
+
+        if (-not $CurrentScriptPath) {
+            Write-Warning "Aktueller Skriptpfad kann nicht ermittelt werden. Aktualisierung abgebrochen."
+            return
+        }
+
+        try {
+            $NewScriptContent | Set-Content -Path $CurrentScriptPath -Encoding UTF8
+            Write-Host "Skript erfolgreich auf Version $RemoteVersion aktualisiert."
+        }
+        catch {
+            Write-Warning "Die neue Version konnte nicht in $CurrentScriptPath gespeichert werden."
+            return
+        }
+    }
+    else {
+        Write-Host "Kein Update erforderlich."
+    }
+}
+#-------------------------------------------------------------------------------------------------------------------------------#
 
 
 
 #-------------------------------------------------------------------------------------------------------------------------------#
 #                                                             Main                                                              #
+#-------------------------------------------------------------------------------------------------------------------------------#
+#                                                                                                                               #
+if ($args[0].ToLower().Equals("update")) {                                                                                      #
+    Update_Script                                                                                                               #
+    return                                                                                                                      #
+}                                                                                                                               #
+#                                                                                                                               #
 #-------------------------------------------------------------------------------------------------------------------------------#
 #                                                                                                                               #
 foreach ($arg in $args) {                                                                                                       #
