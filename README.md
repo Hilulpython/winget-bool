@@ -1,1 +1,1 @@
-# Coin
+# Winget-bool
