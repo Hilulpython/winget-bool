@@ -7,6 +7,12 @@
 #------------------------------------------------------------------------------------------------------------------#
 #                                                    VARIABLES                                                     #
 #------------------------------------------------------------------------------------------------------------------#
+[string]$global:source = $MyInvocation.MyCommand.Path                                                              #
+[string]$global:name = (Get-Item $source).BaseName                                                                 #
+#                                                                                                                  #
+[string]$global:targetDir = Join-Path ([Environment]::GetFolderPath("ProgramFiles")) "WindowsPowerShell\Scripts"   #
+[string]$global:targetPath = Join-Path $targetDir $name                                                            #
+#                                                                                                                  #
 [string[]]$WingetArgs = @()                   # Create a empty array for the winget parameters                     #
 [int16]$global:originalBufferSize = $rawUI.BufferSize                                                              #
 [int16]$global:originalWindowSize = $rawUI.WindowSize                                                              #
@@ -67,7 +73,7 @@ chcp 65001 > $null                                                      # (Chang
 #-------------------------------------------------------------------------------------------------------------------------------#
 #                                                         Help-Function                                                         #
 #-------------------------------------------------------------------------------------------------------------------------------#
-function Call_Help {
+function Get-Help {
     [OutputType([void])]
     param ()
 
@@ -126,7 +132,7 @@ Die folgenden Optionen stehen für winget-bool zur Verfügung:
 #-------------------------------------------------------------------------------------------------------------------------------#
 #                                                            Macros                                                             #
 #-------------------------------------------------------------------------------------------------------------------------------#
-function Print_Text {                                                                                                           #
+function Write-Text {                                                                                                           #
     [OutputType([void])]                                                                                                        #
     param (                                                                                                                     #
         [string]$text,                                                                                                          #
@@ -144,21 +150,14 @@ function Print_Text {                                                           
     }                                                                                                                           #
 }                                                                                                                               #
 #-------------------------------------------------------------------------------------------------------------------------------#
-function Var_Active {                                                                                                           #
+function Get-Active {                                                                                                           #
     [OutputType([bool])]                                                                                                        #
     param ()                                                                                                                    #
     #                                                                                                                           #
     return ($null -ne[Environment]::GetEnvironmentVariable($varName, 'User'))                                                   #
 }                                                                                                                               #
 #-------------------------------------------------------------------------------------------------------------------------------#
-function Out_String {                                                                                                           #
-    [OutputType([string])]                                                                                                      #
-    param ()                                                                                                                    #
-    #                                                                                                                           #
-    return ($boolArray | ForEach-Object { if ($_){ "1" } else { "0" }}) -join ""                                                #
-}                                                                                                                               #
-#-------------------------------------------------------------------------------------------------------------------------------#
-function Format_Output {                                                                                                        #
+function Format-Output {                                                                                                        #
     param (                                                                                                                     #
         [bool]$shouldString = $false                                                                                            #
     )                                                                                                                           #
@@ -184,7 +183,7 @@ function Format_Output {                                                        
 #-------------------------------------------------------------------------------------------------------------------------------#
 #                                                          Functions                                                            #
 #-------------------------------------------------------------------------------------------------------------------------------#
-function Get_UpgradeSpaceCount {                                                                                                #
+function Get-UpgradeSpaceCount {                                                                                                #
     [OutputType([int16[]])]   # Output type indicator                                                                           #
     param (                                                                                                                     #
         [string]$inputText,                                                                                                     #
@@ -209,7 +208,7 @@ function Get_UpgradeSpaceCount {                                                
     return $spaceCounts                                                                                                         #
 }                                                                                                                               #
 #-------------------------------------------------------------------------------------------------------------------------------#
-function Get_UpgradeVersion {                                                                                                   #
+function Get-UpgradeVersion {                                                                                                   #
     [OutputType([int16])]   # Output type indicator                                                                             #
     param (                                                                                                                     #
         [string]$package,                                                                                                       #
@@ -235,7 +234,7 @@ function Get_UpgradeVersion {                                                   
     #                                                                                                                           #
     if (!$show) {                                                                                                               #
         [string[]]$lines = winget $EvalArgs                                                                                     #
-        [int16[]]$spacings = Get_UpgradeSpaceCount $lines[0] $lines[1]                                                          #
+        [int16[]]$spacings = Get-UpgradeSpaceCount $lines[0] $lines[1]                                                          #
         [int16]$itemAmount = $null                                                                                              #
         #                                                                                                                       #
         for ($i = $lines.Length - 1; $i -ge 0; $i--) {                                                                          #
@@ -283,7 +282,7 @@ function Get_UpgradeVersion {                                                   
     return $returnVal                                                                                                           #
 }                                                                                                                               #
 #-------------------------------------------------------------------------------------------------------------------------------#
-function Evaluate_Winget {                                                                                                      #
+function Measure-Winget {                                                                                                      #
     [OutputType([int16])]   # Output type indicator                                                                             #
     param (                                                                                                                     #
         [string[]]$WingetArgs                                                                                                   #
@@ -301,7 +300,7 @@ function Evaluate_Winget {                                                      
     })                                                                                                                          #
     #                                                                                                                           #
     if (0 -eq $LASTEXITCODE) {                                                                                                  #
-        Print_Text $filteredOutput -join "`n"                                                                                   #
+        Write-Text $filteredOutput -join "`n"                                                                                   #
         return $true                                                                                                            #
     } else {                                                                                                                    #
         $global:ErrorCache += $filteredOutput -join "`n"                                                                        #
@@ -309,7 +308,7 @@ function Evaluate_Winget {                                                      
     }                                                                                                                           #
 }                                                                                                                               #
 #-------------------------------------------------------------------------------------------------------------------------------#
-function Process_PackageUpgrades {                                                                                              #
+function Invoke-PackageUpgrade {                                                                                              #
     [OutputType([bool[]])]                                                                                                      #
     param (                                                                                                                     #
         [string[]]$WingetArgs                                                                                                   #
@@ -338,18 +337,18 @@ function Process_PackageUpgrades {                                              
         $global:Package_ID += $fpak                                                                                             #
         $global:Package_Version.Clear()                                                                                         #
         #                                                                                                                       #
-        if ( -not (Get_UpgradeVersion $fpak $false)) {  # Get current and upgrade version                                       #
+        if ( -not (Get-UpgradeVersion $fpak $false)) {  # Get current and upgrade version                                       #
             $global:ErrorCache += "Das Paket '$fpak' wurde nicht gefunden"                                                      #
             $global:outBool += $false                                                                                           #
             continue                                                                                                            #
         }                                                                                                                       #
         #                                                                                                                       #
-        if ( -not (Evaluate_Winget $EvalArgs)) {    # Try to upgrade                                                            #
+        if ( -not (Measure-Winget $EvalArgs)) {    # Try to upgrade                                                            #
             $global:outBool += $false                                                                                           #
             continue                                                                                                            #
         }                                                                                                                       #
         #                                                                                                                       #
-        if ( -not (Get_UpgradeVersion $fpak $true)) {   # Get new current version                                               #
+        if ( -not (Get-UpgradeVersion $fpak $true)) {   # Get new current version                                               #
             $global:ErrorCache += "Das Paket '$fpak' wurde nicht gefunden (Sollte Eigentlich nicht passieren)"                  #
             $global:outBool += $false                                                                                           #
             continue                                                                                                            #
@@ -363,7 +362,7 @@ function Process_PackageUpgrades {                                              
     return $true                                                                                                                #
 }                                                                                                                               #
 #-------------------------------------------------------------------------------------------------------------------------------#
-function Update_EnvVariable {                                                                                                   #
+function Update-EnvVariable {                                                                                                   #
     [OutputType([void])]                                                                                                        #
     param(                                                                                                                      #
         [string]$newName                                                                                                        #
@@ -425,7 +424,7 @@ public class NativeMethods {
     ) | Out-Null               # Suppress any output from the call                                                              #
 }                                                                                                                               #
 #-------------------------------------------------------------------------------------------------------------------------------#
-function Update_Script {                                                                                                        #
+function Update-Script {                                                                                                        #
     param(                                                                                                                      #
         [string]$VersionUrl = "https://raw.githubusercontent.com/Hilulpython/winget-bool/refs/heads/main/Version.txt",          #
         [string]$ScriptUrl = "https://github.com/Hilulpython/winget-bool/raw/refs/heads/main/Script/winget-bool.exe"            #
@@ -481,7 +480,7 @@ function Update_Script {                                                        
 #-------------------------------------------------------------------------------------------------------------------------------#
 #                                                                                                                               #
 if ($args[0].ToLower().Equals("update")) {                                                                                      #
-    Update_Script                                                                                                               #
+    Update-Script                                                                                                               #
     return                                                                                                                      #
 }                                                                                                                               #
 #                                                                                                                               #
@@ -492,17 +491,17 @@ foreach ($arg in $args) {                                                       
     switch ($arg.ToLower()) {                                                                                                   #
         #                                                                                                                       #
         "-help" {                                                                                                               #
-            Call_Help                                                                                                           #
+            Get-Help                                                                                                           #
             return $true                                                                                                        #
         }                                                                                                                       #
         #                                                                                                                       #
         "-h" {                                                                                                                  #
-            Call_Help                                                                                                           #
+            Get-Help                                                                                                           #
             return $true                                                                                                        #
         }                                                                                                                       #
         #                                                                                                                       #
         "--help" {                                                                                                              #
-            Call_Help                                                                                                           #
+            Get-Help                                                                                                           #
             return $true                                                                                                        #
         }                                                                                                                       #
         #                                                                                                                       #
@@ -547,24 +546,24 @@ if ($WingetArgs[0].ToLower() -match 'upgrade') {                                
     }                                                                                                                           #
     #                                                                                                                           #
     elseif (1 -lt $WingetArgs.Length) {                                                                                         #
-        if (0 -ne (Process_PackageUpgrades $WingetArgs)) {                                                                      #
-            Print_Text $global:ErrorCache[0] $true                                                                              #
+        if (0 -ne (Invoke-PackageUpgrade $WingetArgs)) {                                                                      #
+            Write-Text $global:ErrorCache[0] $true                                                                              #
             return $false                                                                                                       #
         }                                                                                                                       #
         #                                                                                                                       #
         if ($global:Should_Output_All) {                                                                                        #
             foreach ($err in $global:ErrorCache) {                                                                              #
-                Print_Text $err $true                                                                                           #
+                Write-Text $err $true                                                                                           #
             }                                                                                                                   #
         }                                                                                                                       #
         #                                                                                                                       #
-        if (Var_Active) {                                                                                                       #
-            [string]$value = Format_Output $true                                                                                #
+        if (Get-Active) {                                                                                                       #
+            [string]$value = Format-Output $true                                                                                #
             [Environment]::SetEnvironmentVariable($varName, $value, 'User')                                                     #
             return $true                                                                                                        #
         }                                                                                                                       #
         #                                                                                                                       #
-        return Format_Output                                                                                                    #
+        return Format-Output                                                                                                    #
     }                                                                                                                           #
 }                                                                                                                               #
 #                                                                                                                               #
@@ -572,23 +571,23 @@ if ($WingetArgs[0].ToLower() -match 'upgrade') {                                
 #                                                                                                                               #
 if ($WingetArgs[0].ToLower() -match 'changeName') {                                                                             #
     if (2 -gt $WingetArgs.Length) {                                                                                             #
-        Print_Text "Kein Name wurde gegenen (Script.ps1 changeName <Name>)" $true                                               #
+        Write-Text "Kein Name wurde gegenen (Script.ps1 changeName <Name>)" $true                                               #
         return $false                                                                                                           #
     }                                                                                                                           #
     #                                                                                                                           #
-    Update_EnvVariable $WingetArgs[1]                                                                                           #
+    Update-EnvVariable $WingetArgs[1]                                                                                           #
     return $true                                                                                                                #
 }                                                                                                                               #
 #                                                                                                                               #
 #-------------------------------------------------------------------------------------------------------------------------------#
 #                                                                                                                               #
-if (-not (Evaluate_Winget $WingetArgs)) {                                                                                       #
-    Print_Text $global:ErrorCache[0]                                                                                            #
+if (-not (Measure-Winget $WingetArgs)) {                                                                                       #
+    Write-Text $global:ErrorCache[0]                                                                                            #
     $global:outBool += $true                                                                                                    #
-    return Format_Output                                                                                                        #
+    return Format-Output                                                                                                        #
 }                                                                                                                               #
 #                                                                                                                               #
 $global:outBool += $true                                                                                                        #
-return Format_Output                                                                                                            #
+return Format-Output                                                                                                            #
 #                                                                                                                               #
 #-------------------------------------------------------------------------------------------------------------------------------#
