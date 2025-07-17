@@ -18,7 +18,8 @@ It's a wrapper to the Windows 'winget' command focusing mostly on the upgrade pa
 
 ```bash
 Download the .exe
-!!! There is no build-in installer... yet !!!
+Move it to where you want to
+Add the path to the User or System Path variable
 ```
 
 ## Help
