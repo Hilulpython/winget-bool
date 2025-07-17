@@ -16,7 +16,7 @@ It's a wrapper to the Windows 'winget' command focusing mostly on the upgrade pa
 
 ### Installation
 
-```bash
+```
 Download the .exe
 Move it to where you want to
 Add the path to the User or System Path variable
@@ -25,7 +25,7 @@ Add the path to the User or System Path variable
 ## Help
 <pre>
 winget-bool - PowerShell Winget wrapper
-Verwendung: winget-bool \[\<Befehl\>\] \[\<Optionen\>\]
+Verwendung: winget-bool [&lt;Befehl&gt;] [&lt;Optionen&gt;]
 
 Folgende Befehle sind für winget verfügbar:
   install    Installiert das angegebene Paket
