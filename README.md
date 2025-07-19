@@ -27,6 +27,9 @@ Add the path to the User or System Path variable
 winget-bool - PowerShell Winget wrapper
 Verwendung: winget-bool [&lt;Befehl&gt;] [&lt;Optionen&gt;]
 
+Folgende Befehle sind für winget-bool verfügbar:
+  change <-name {string}|-true {string}|-false {string}>  Kann benutzt werden um den Namen der User Variable zu ändern
+
 Die folgenden Optionen stehen für winget-bool zur Verfügung:
   -help         (-h)          Zeigt diese Hilfe an (überschreibt nicht -? aber --help)
   -out          (-o)          Gibt die Normalen Ausgabe des Befehls
